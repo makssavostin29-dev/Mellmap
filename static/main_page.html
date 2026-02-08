@@ -1,0 +1,525 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>MellMap</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Inter', sans-serif; }
+    body {
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      transition: background-color 0.3s, color 0.3s;
+      overflow: hidden;
+      position: relative;
+    }
+
+    :root {
+      --bg-color: #ffffff;
+      --text-color: #000000;
+      --card-bg: #f9f9f9;
+      --btn-primary-bg: #FF6B35;
+      --btn-primary-hover: #e05a2a;
+      --border-color: #eee;
+    }
+
+    .dark-theme {
+      --bg-color: #121212;
+      --text-color: #e0e0e0;
+      --card-bg: #1e1e1e;
+      --border-color: #333;
+    }
+
+    body {
+      background-color: var(--bg-color);
+      color: var(--text-color);
+    }
+
+    header {
+      padding: 1.5rem 2rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background-color: var(--bg-color);
+      border-bottom: 1px solid(var(--border-color));
+      z-index: 10;
+    }
+
+    .logo {
+      font-size: 1.8rem;
+      font-weight: 700;
+      color: #FF6B35;
+      text-decoration: none;
+    }
+
+    .theme-toggle {
+      background: none;
+      border: 1px solid(var(--border-color));
+      width: 44px;
+      height: 24px;
+      border-radius: 12px;
+      position: relative;
+      cursor: pointer;
+      outline: none;
+    }
+
+    .theme-toggle::before {
+      content: '';
+      position: absolute;
+      width: 20px;
+      height: 20px;
+      border-radius: 50%;
+      background: #FF6B35;
+      top: 1px;
+      left: 2px;
+      transition: transform 0.3s ease;
+    }
+
+    .dark-theme .theme-toggle::before {
+      transform: translateX(20px);
+      background: #03dac6;
+    }
+
+    main {
+      flex: 1;
+      position: relative;
+      padding: 2rem 0;
+      overflow: hidden;
+    }
+
+    /* Левая колонка — прижата к левому краю */
+    .left-col {
+      position: absolute;
+      left: 2rem;
+      top: 2rem;
+      width: 320px;
+      background: var(--card-bg);
+      padding: 1.5rem;
+      border-radius: 12px;
+      border: 1px solid(var(--border-color));
+      overflow-y: auto;
+      max-height: calc(100vh - 120px);
+    }
+
+    /* Правая колонка — прижата к правому краю */
+    .right-col {
+      position: absolute;
+      right: 2rem;
+      top: 2rem;
+      width: 280px;
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+      height: calc(100vh - 120px);
+      overflow-y: auto;
+    }
+
+    .place-card-fullheight {
+      background: var(--card-bg);
+      border-radius: 12px;
+      overflow: hidden;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+      flex: 0 0 auto;
+      display: flex;
+      flex-direction: column;
+      cursor: pointer;
+      transition: transform 0.2s;
+    }
+
+    .place-card-fullheight:hover {
+      transform: translateY(-3px);
+    }
+
+    .card-photo-16-9 {
+      height: 120px;
+      background-size: cover;
+      background-position: center;
+    }
+
+    .card-info-full {
+      padding: 0.9rem;
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .card-info-full h3 {
+      font-size: 1.1rem;
+      margin-bottom: 0.3rem;
+      color: var(--text-color);
+    }
+
+    .card-meta-full {
+      font-size: 0.85rem;
+      color: #666;
+      margin-bottom: 0.2rem;
+    }
+
+    .card-meta-full span {
+      font-weight: 600;
+      color: #FF6B35;
+    }
+
+    /* ЦЕНТРАЛЬНЫЙ БЛОК — СТРОГО ПО ЦЕНТРУ ЭКРАНА */
+    .center-col {
+      position: absolute;
+      left: 50%;
+      top: 2rem;
+      transform: translateX(-50%);
+      width: 360px;
+      display: flex;
+      flex-direction: column;
+      gap: 1.5rem;
+      z-index: 5;
+    }
+
+    .map-button-container {
+      display: flex;
+      justify-content: center;
+    }
+
+    .map-link {
+      width: 280px;
+      padding: 1.2rem;
+      font-size: 1.2rem;
+      font-weight: 700;
+      color: #fff;
+      background-color: #FF6B35;
+      border: none;
+      border-radius: 30px;
+      text-decoration: none;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      transition: background-color 0.3s ease;
+      box-shadow: 0 6px 12px rgba(255, 107, 53, 0.3);
+    }
+
+    .map-link:hover {
+      background-color: #e05a2a;
+      color: white;
+    }
+
+    .quick-search {
+      background: var(--card-bg);
+      padding: 1.5rem;
+      border-radius: 12px;
+      border: 1px solid(var(--border-color));
+    }
+
+    .quick-search h3 {
+      color: #FF6B35;
+      margin-bottom: 1rem;
+      font-size: 1.2rem;
+    }
+
+    .quick-search label {
+      display: block;
+      margin-bottom: 0.4rem;
+      font-weight: 600;
+      font-size: 0.95rem;
+    }
+
+    .quick-search select,
+    .quick-search input {
+      width: 100%;
+      padding: 0.5rem;
+      border: 1px solid(var(--border-color));
+      border-radius: 6px;
+      background: var(--bg-color);
+      color: var(--text-color);
+    }
+
+    .find-btn {
+      width: 100%;
+      padding: 0.8rem;
+      font-size: 1rem;
+      font-weight: 600;
+      color: #fff;
+      background-color: #FF6B35;
+      border: none;
+      border-radius: 30px;
+      cursor: pointer;
+      transition: background-color 0.3s ease;
+    }
+
+    .find-btn:hover {
+      background-color: #e05a2a;
+    }
+
+    #result {
+      margin-top: 1.5rem;
+      display: none;
+    }
+
+    #result-name {
+      font-weight: 600;
+      margin-bottom: 0.5rem;
+    }
+
+    #result-meta {
+      font-size: 0.9rem;
+      color: #666;
+    }
+
+    #result-link {
+      display: block;
+      width: 100%;
+      padding: 0.7rem;
+      margin-top: 0.8rem;
+      font-size: 0.95rem;
+      font-weight: 600;
+      color: #fff;
+      background-color: #FF6B35;
+      text-decoration: none;
+      border-radius: 30px;
+      text-align: center;
+      transition: background-color 0.3s ease;
+    }
+
+    #result-link:hover {
+      background-color: #e05a2a;
+    }
+
+    .left-col h2 {
+      font-size: 1.3rem;
+      margin-bottom: 0.8rem;
+      color: #FF6B35;
+    }
+
+    .left-col p {
+      margin-bottom: 1rem;
+      line-height: 1.6;
+      font-size: 0.95rem;
+    }
+
+    .steps ol {
+      padding-left: 1.2rem;
+      margin-bottom: 1rem;
+    }
+
+    .steps li {
+      margin-bottom: 0.6rem;
+      line-height: 1.5;
+    }
+  </style>
+</head>
+<body>
+
+  <header>
+    <a href="#" class="logo">MellMap</a>
+    <button class="theme-toggle" id="theme-toggle" aria-label="Переключить тему"></button>
+  </header>
+
+  <main>
+    <!-- Левая колонка -->
+    <div class="left-col">
+      <h2>Добро пожаловать в MellMap!</h2>
+      <p>Это интерактивная карта заведений Москвы, где можно вкусно и комфортно позавтракать. Мы собрали только проверенные места с актуальной информацией о времени подачи завтраков.</p>
+
+      <h2>Почему именно завтраки?</h2>
+      <p>Завтрак — самый важный приём пищи. Но найти место, где его подают в нужное время, бывает сложно. В MellMap каждое заведение имеет чёткую категорию: «весь день», «только по выходным» или «в определённое время» (например, 8:00–11:00).</p>
+
+      <h2>Как это работает?</h2>
+      <div class="steps">
+        <ol>
+          <li>Нажмите кнопку «Карта»</li>
+          <li>Выберите район или тип заведения</li>
+          <li>Отфильтруйте по времени завтрака</li>
+          <li>Кликните на маркер, чтобы узнать подробности: меню, фото, адрес, сайт</li>
+        </ol>
+      </div>
+    </div>
+
+    <!-- Центральный блок — СТРОГО ПО ЦЕНТРУ -->
+    <div class="center-col">
+      <div class="map-button-container">
+        <a href="map.html" class="map-link">Карта</a>
+      </div>
+
+      <div class="quick-search">
+        <h3>Найди свой завтрак</h3>
+        <div style="display: grid; gap: 0.8rem; font-size: 0.95rem;">
+          <div>
+            <label>Округ:</label>
+            <select id="qs-district">
+              <option value="">Любой</option>
+              <option value="ЦАО">ЦАО</option>
+              <option value="САО">САО</option>
+              <option value="СВАО">СВАО</option>
+              <option value="ВАО">ВАО</option>
+              <option value="ЮВАО">ЮВАО</option>
+              <option value="ЮАО">ЮАО</option>
+              <option value="ЮЗАО">ЮЗАО</option>
+              <option value="ЗАО">ЗАО</option>
+              <option value="СЗАО">СЗАО</option>
+              <option value="ЗелАО">ЗелАО</option>
+              <option value="НАО">НАО</option>
+              <option value="ТАО">ТАО</option>
+            </select>
+          </div>
+
+          <div>
+            <label>Категория:</label>
+            <select id="qs-category">
+              <option value="">Любая</option>
+              <option value="cafe">Кафе</option>
+              <option value="restaurant">Ресторан</option>
+              <option value="bar">Бар</option>
+            </select>
+          </div>
+
+          <div>
+            <label>Время завтрака:</label>
+            <select id="qs-breakfast">
+              <option value="">Любое</option>
+              <option value="all_day">Весь день</option>
+              <option value="weekends_only">Только по выходным</option>
+              <option value="specific_time">В определённое время</option>
+            </select>
+          </div>
+
+          <div>
+            <label>Макс. чек (₽):</label>
+            <input type="number" id="qs-price" placeholder="800">
+          </div>
+
+          <div>
+            <label>Мин. рейтинг:</label>
+            <input type="number" step="0.1" id="qs-rating" placeholder="4.0" min="0" max="5">
+          </div>
+
+          <button id="find-btn" class="find-btn">
+            Найти завтрак!
+          </button>
+        </div>
+
+        <div id="result">
+          <div id="result-name">...</div>
+          <div id="result-meta">...</div>
+          <a id="result-link" href="#">Показать на карте</a>
+        </div>
+      </div>
+    </div>
+
+    <!-- Правая колонка -->
+    <div class="right-col" id="featured-places">
+      <div class="place-card-fullheight" style="display: flex; align-items: center; justify-content: center; padding: 1.5rem; color: #999;">
+        <p>Загрузка...</p>
+      </div>
+      <div class="place-card-fullheight" style="display: flex; align-items: center; justify-content: center; padding: 1.5rem; color: #999;">
+        <p>Загрузка...</p>
+      </div>
+      <div class="place-card-fullheight" style="display: flex; align-items: center; justify-content: center; padding: 1.5rem; color: #999;">
+        <p>Загрузка...</p>
+      </div>
+    </div>
+  </main>
+
+  <script>
+    // ... (оставь тот же JS, что был — он уже исправлен)
+    const savedTheme = localStorage.getItem('theme');
+    if (savedTheme === 'dark') {
+      document.body.classList.add('dark-theme');
+    }
+
+    document.getElementById('theme-toggle').addEventListener('click', () => {
+      document.body.classList.toggle('dark-theme');
+      const isDark = document.body.classList.contains('dark-theme');
+      localStorage.setItem('theme', isDark ? 'dark' : 'light');
+    });
+
+    const NO_PHOTO_SVG = 'image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjgwIiBoZWlnaHQ9IjEyMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KICA8cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSIjZGRkIiAvPgogIDx0ZXh0IHg9IjE0MCIgeT0iNjAiIGZvbnQtZmFtaWx5PSJzYW5zLXNlcmlmIiBmb250LXNpemU9IjE0IiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBmaWxsPSIjOTk5Ij5ObyBQaG90byA8L3RleHQ+Cjwvc3ZnPgo=';
+
+    fetch('/api/places/random?count=3')
+      .then(res => res.json())
+      .then(places => {
+        const container = document.getElementById('featured-places');
+        container.innerHTML = '';
+
+        if (!Array.isArray(places) || places.length === 0) {
+          container.innerHTML = `
+            <div class="place-card-fullheight" style="text-align: center; padding: 1.5rem;">
+              <p>Нет заведений в базе</p>
+            </div>
+          `;
+          return;
+        }
+
+        places.forEach(place => {
+          let photoUrl = NO_PHOTO_SVG;
+          if (Array.isArray(place.photos) && place.photos.length > 0) {
+            const first = place.photos[0];
+            if (typeof first === 'string' && first.trim() !== '') {
+              photoUrl = first;
+            }
+          }
+
+          const card = document.createElement('div');
+          card.className = 'place-card-fullheight';
+          card.innerHTML = `
+            <div class="card-photo-16-9" style="background-image: url('${photoUrl}');"></div>
+            <div class="card-info-full">
+              <h3>${place.name}</h3>
+              <div class="card-meta-full">
+                <span>${place.district}</span> • ${place.category}
+              </div>
+              <div class="card-meta-full">
+                ⭐ ${place.rating} • ${place.price}
+              </div>
+            </div>
+          `;
+          card.addEventListener('click', () => {
+            window.location.href = `map.html?id=${place.id}`;
+          });
+          container.appendChild(card);
+        });
+      })
+      .catch(err => {
+        console.error('Ошибка загрузки случайных мест:', err);
+        document.getElementById('featured-places').innerHTML = `
+          <div class="place-card-fullheight" style="text-align: center; padding: 1.5rem; color: #f00;">
+            Ошибка загрузки
+          </div>
+        `;
+      });
+
+    document.getElementById('find-btn').addEventListener('click', async () => {
+      const params = new URLSearchParams();
+      const district = document.getElementById('qs-district').value;
+      const category = document.getElementById('qs-category').value;
+      const breakfast = document.getElementById('qs-breakfast').value;
+      const price = document.getElementById('qs-price').value;
+      const rating = document.getElementById('qs-rating').value;
+
+      if (district) params.append('district', district);
+      if (category) params.append('category', category);
+      if (breakfast) params.append('breakfast_time', breakfast);
+      if (price) params.append('max_price', price);
+      if (rating) params.append('min_rating', rating);
+
+      try {
+        const res = await fetch(`/api/places/random-match?${params}`);
+        if (!res.ok) {
+          const error = await res.json().catch(() => ({}));
+          throw new Error(error.error || 'Не найдено');
+        }
+
+        const place = await res.json();
+        document.getElementById('result-name').textContent = place.name;
+        document.getElementById('result-meta').textContent =
+          `${place.district} • ${place.category} • ⭐ ${place.rating} • ${place.price}`;
+        document.getElementById('result-link').href = `map.html?id=${place.id}`;
+        document.getElementById('result').style.display = 'block';
+      } catch (err) {
+        alert('Не удалось найти подходящее заведение 😢\nПопробуйте изменить критерии.');
+        document.getElementById('result').style.display = 'none';
+      }
+    });
+  </script>
+</body>
+</html>

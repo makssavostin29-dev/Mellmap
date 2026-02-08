@@ -1,0 +1,402 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>MellMap</title>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Inter', sans-serif; }
+    body {
+      height: 100vh;
+      overflow: hidden;
+      transition: background-color 0.3s, color 0.3s;
+    }
+
+    :root {
+      --bg-color: #ffffff;
+      --text-color: #000000;
+      --filters-bg: #f9f9f9;
+      --details-bg: #ffffff;
+      --border-color: #eee;
+      --accent-color: #FF6B35;
+    }
+
+    .dark-theme {
+      --bg-color: #121212;
+      --text-color: #e0e0e0;
+      --filters-bg: #1e1e1e;
+      --details-bg: #1e1e1e;
+      --border-color: #333;
+      --accent-color: #bb86fc;
+    }
+
+    body {
+      background-color: var(--bg-color);
+      color: var(--text-color);
+    }
+
+    header {
+      padding: 1rem 2rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background-color: var(--bg-color);
+      border-bottom: 1px solid var(--border-color);
+      z-index: 1000;
+      position: relative;
+    }
+
+    .logo {
+      font-size: 1.5rem;
+      font-weight: 700;
+      color: #FF6B35 !important;
+      text-decoration: none;
+    }
+
+    .container {
+      display: flex;
+      height: calc(100vh - 60px);
+      position: relative;
+    }
+
+    .filters {
+      width: 260px;
+      padding: 1.5rem;
+      background: var(--filters-bg);
+      border-right: 1px solid var(--border-color);
+      overflow-y: auto;
+      z-index: 10;
+    }
+
+    /* ФИЛЬТРЫ — ВСЕГДА ОРАНЖЕВЫЕ! */
+    .filters h3 {
+      margin-bottom: 1.2rem;
+      color: #FF6B35;
+      font-size: 1.3rem;
+    }
+
+    .filter-group {
+      margin-bottom: 1.3rem;
+    }
+
+    .filter-group label {
+      display: block;
+      margin-bottom: 0.5rem;
+      font-weight: 600;
+      font-size: 1.05rem;
+      color: var(--text-color);
+    }
+
+    .filter-group select {
+      width: 100%;
+      padding: 0.6rem;
+      border: 1px solid var(--border-color);
+      border-radius: 6px;
+      font-size: 1rem;
+      background: var(--bg-color);
+      color: var(--text-color);
+    }
+
+    #map {
+      flex: 1;
+      height: 100%;
+      z-index: 1;
+      position: relative;
+    }
+
+    .place-details {
+      width: 100%;
+      max-width: 40%;
+      height: 100%;
+      padding: 1.5rem;
+      background: var(--details-bg);
+      border-left: 1px solid var(--border-color);
+      overflow-y: auto;
+      display: none;
+      z-index: 20;
+      position: absolute;
+      top: 0;
+      right: 0;
+      bottom: 0;
+      box-shadow: -2px 0 10px rgba(0,0,0,0.1);
+      font-size: 1.05rem;
+      color: var(--text-color);
+    }
+
+    .place-details.active {
+      display: block;
+    }
+
+    .close-btn {
+      float: right;
+      font-size: 1.8rem;
+      cursor: pointer;
+      color: #999;
+      line-height: 1;
+    }
+
+    .dark-theme .close-btn {
+      color: #bbb;
+    }
+
+    .close-btn:hover {
+      color: #FF6B35;
+    }
+
+    .place-header h2 {
+      margin-bottom: 0.6rem;
+      font-size: 1.4rem;
+      color: var(--text-color);
+    }
+
+    .rating {
+      color: #FF6B35;
+      margin-bottom: 1.2rem;
+      font-size: 1.2rem;
+    }
+
+    .info p {
+      margin-bottom: 0.7rem;
+      color: var(--text-color);
+    }
+
+    .description {
+      margin: 1.2rem 0;
+      padding: 1.2rem;
+      background: var(--filters-bg);
+      border-radius: 8px;
+      font-style: italic;
+      line-height: 1.5;
+      word-break: break-word;
+      overflow-wrap: break-word;
+      color: var(--text-color);
+    }
+
+    .reviews {
+      margin-top: 1.6rem;
+    }
+
+    /* ОТЗЫВЫ — ВСЕГДА ОРАНЖЕВЫЕ! */
+    .reviews h3 {
+      margin-bottom: 0.9rem;
+      color: #FF6B35;
+      font-size: 1.25rem;
+    }
+
+    .review-item {
+      background: var(--filters-bg);
+      padding: 1rem;
+      border-radius: 8px;
+      margin-bottom: 0.8rem;
+      line-height: 1.5;
+      color: var(--text-color);
+    }
+
+    .carousel {
+      margin-bottom: 1.4rem;
+      position: relative;
+      overflow: hidden;
+      border-radius: 10px;
+      height: 280px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+      cursor: zoom-in;
+      transition: transform 0.2s;
+    }
+
+    .carousel img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: none;
+    }
+
+    .carousel img.active {
+      display: block;
+    }
+
+    .carousel-controls {
+      position: absolute;
+      top: 50%;
+      width: 100%;
+      display: flex;
+      justify-content: space-between;
+      transform: translateY(-50%);
+      padding: 0 15px;
+    }
+
+    .carousel-btn {
+      background: rgba(255,255,255,0.85);
+      border: none;
+      padding: 0.6rem;
+      cursor: pointer;
+      font-size: 1.6rem;
+      border-radius: 50%;
+      transition: all 0.2s;
+      width: 48px;
+      height: 48px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #333;
+    }
+
+    .dark-theme .carousel-btn {
+      background: rgba(50,50,50,0.85);
+      color: #e0e0e0;
+    }
+
+    .carousel-btn:hover {
+      background: white;
+      transform: scale(1.1);
+    }
+
+    .dark-theme .carousel-btn:hover {
+      background: #333;
+    }
+
+    .carousel-indicators {
+      display: flex;
+      justify-content: center;
+      gap: 0.6rem;
+      margin-top: 12px;
+    }
+
+    .carousel-indicator {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background: #bbb;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+
+    .dark-theme .carousel-indicator {
+      background: #555;
+    }
+
+    .carousel-indicator.active {
+      background: #FF6B35;
+    }
+
+    .zoom-modal {
+      position: fixed;
+      top: 0; left: 0;
+      width: 100%; height: 100%;
+      background: rgba(0,0,0,0.92);
+      display: none;
+      z-index: 1000;
+      align-items: center;
+      justify-content: center;
+      padding: 2rem;
+    }
+
+    .zoom-modal.active {
+      display: flex;
+    }
+
+    .zoomed-photo {
+      max-width: 95%;
+      max-height: 95vh;
+      object-fit: contain;
+      border: 3px solid #FF6B35;
+      border-radius: 12px;
+      box-shadow: 0 0 40px rgba(0,0,0,0.7);
+      cursor: pointer;
+    }
+  </style>
+</head>
+<body>
+
+  <header>
+    <a href="main_page.html" class="logo">MellMap</a>
+  </header>
+
+  <div class="container">
+    <aside class="filters">
+      <h3>Фильтры</h3>
+      <div class="filter-group">
+        <label>Административный округ</label>
+        <select id="district-filter">
+          <option value="">Все округа</option>
+          <option value="ЦАО">ЦАО</option>
+          <option value="САО">САО</option>
+          <option value="СВАО">СВАО</option>
+          <option value="ВАО">ВАО</option>
+          <option value="ЮВАО">ЮВАО</option>
+          <option value="ЮАО">ЮАО</option>
+          <option value="ЮЗАО">ЮЗАО</option>
+          <option value="ЗАО">ЗАО</option>
+          <option value="СЗАО">СЗАО</option>
+          <option value="ЗелАО">ЗелАО</option>
+          <option value="НАО">НАО</option>
+          <option value="ТАО">ТАО</option>
+        </select>
+      </div>
+      <div class="filter-group">
+        <label>Категория</label>
+        <select id="category-filter">
+          <option value="">Все категории</option>
+          <option value="cafe">Кафе</option>
+          <option value="restaurant">Ресторан</option>
+          <option value="bar">Бар</option>
+        </select>
+      </div>
+      <div class="filter-group">
+        <label>Время завтрака</label>
+        <select id="breakfast-time-filter">
+          <option value="">Любое</option>
+          <option value="all_day">Весь день</option>
+          <option value="weekends_only">Только по выходным</option>
+          <option value="specific_time">В определённое время</option>
+        </select>
+      </div>
+      <div class="categories-info">
+        <h4>О категориях</h4>
+        <ul style="font-size: 0.95rem; line-height: 1.6; color: var(--text-color);">
+          <li><strong>Кафе</strong> — уют, быстрое обслуживание</li>
+          <li><strong>Ресторан</strong> — полное меню, официанты</li>
+          <li><strong>Бар</strong> — напитки, вечеринки</li>
+        </ul>
+      </div>
+    </aside>
+    <div id="map"></div>
+    <aside class="place-details" id="place-details">
+      <div class="close-btn" id="close-details">×</div>
+      <div class="place-header">
+        <h2 id="place-name">Название заведения</h2>
+        <div class="rating" id="place-rating">⭐️ 4.0</div>
+      </div>
+      <div class="carousel" id="photo-carousel">
+        <img src="" alt="Фото заведения" class="active">
+        <div class="carousel-controls">
+          <button class="carousel-btn" id="prev-btn">‹</button>
+          <button class="carousel-btn" id="next-btn">›</button>
+        </div>
+        <div class="carousel-indicators" id="indicators"></div>
+      </div>
+      <p><strong>Адрес:</strong> <span id="place-address">Адрес не указан</span></p>
+      <p><strong>Средний чек:</strong> <span id="place-price">₽800</span></p>
+      <p><strong>Округ:</strong> <span id="place-district">ЦАО</span></p>
+      <p><strong>Категория:</strong> <span id="place-category">Кафе</span></p>
+      <p><strong>Завтрак:</strong> <span id="place-breakfast-time">Не указано</span></p>
+      <p id="place-website-container" style="display: none;">
+        <strong>Сайт заведения:</strong>
+        <a id="place-website" href="#" target="_blank" style="color: #FF6B35; text-decoration: underline;"></a>
+      </p>
+      <div class="description" id="place-description">Описание отсутствует</div>
+      <div class="reviews">
+        <h3>Отзывы</h3>
+        <div id="reviews-list"><p>Пока нет отзывов.</p></div>
+      </div>
+    </aside>
+  </div>
+
+  <div class="zoom-modal" id="zoom-modal">
+    <img id="zoomed-photo" class="zoomed-photo" src="" alt="Увеличенное фото">
+  </div>
+
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script src="assets/js/map.js"></script>
+</body>
+</html>
